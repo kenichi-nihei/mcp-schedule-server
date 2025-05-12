@@ -1,31 +1,44 @@
-from fastapi import FastAPI, Request, Form
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi import FastAPI, Request, Query
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from typing import List
 import urllib.parse
+import openai
+import os
 
 app = FastAPI()
-
-# CORS許可（外部アクセス用）
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 templates = Jinja2Templates(directory="templates")
 
+openai.api_key = os.getenv("OPENAI_API_KEY")  # 環境変数に登録しておくこと
+
+# ✅ 日時候補をGPTから抽出
+def extract_datetime_candidates(email_body: str) -> List[str]:
+    prompt = f"""
+以下のメール本文から、打ち合わせ候補日時を ISO8601形式（例: 2024-05-15T15:00:00）で最大3件抽出してください。
+本文:
+{email_body}
+"""
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    lines = response["choices"][0]["message"]["content"].splitlines()
+    return [line.strip() for line in lines if line.strip()]
+
+# ✅ /contextエンドポイント：メール受信時に呼び出される
 @app.post("/context")
 async def receive_context(request: Request):
     body = await request.json()
+    email = body["context"]["email"]
+    subject = email["subject"]
+    email_body = email["body"]
 
-    # 🔍 デバッグ用（必要最低限）
-    print("✅ 受信データ:", body)
+    print("✅ 受信データ:", email)
 
-    subject = body["context"]["email"]["subject"]
-    candidates = ["2024-05-15T15:00:00", "2024-05-17T15:00:00"]
+    # GPTで日時候補を抽出
+    candidates = extract_datetime_candidates(email_body)
+
+    # クエリパラメータ用にエンコード
     encoded_candidates = urllib.parse.urlencode([
         ("candidates", dt) for dt in candidates
     ])
@@ -36,8 +49,7 @@ async def receive_context(request: Request):
         "ui_url": f"https://mcp-schedule-server.onrender.com/choose?{encoded_candidates}&body={encoded_body}"
     }
 
-from fastapi import Query
-
+# ✅ /chooseエンドポイント：候補日時を選ぶ画面
 @app.get("/choose", response_class=HTMLResponse)
 async def choose_get(
     request: Request,
@@ -49,11 +61,3 @@ async def choose_get(
         "candidates": candidates,
         "body": body
     })
-
-
-@app.post("/choose", response_class=RedirectResponse)
-async def choose_post(selected: str = Form(...)):
-    subject = "打ち合わせ予定"
-    body = f"以下日時で打ち合わせをお願いします。\n{selected}"
-    outlook_url = f"https://outlook.office.com/calendar/0/deeplink/compose?subject={urllib.parse.quote(subject)}&body={urllib.parse.quote(body)}"
-    return RedirectResponse(url=outlook_url, status_code=303)
