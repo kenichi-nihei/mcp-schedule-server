@@ -20,13 +20,13 @@ templates = Jinja2Templates(directory="templates")
 @app.post("/context")
 async def receive_context(request: Request):
     body = await request.json()
+    email = body["context"]["email"]
     candidates = ["2024-05-15T15:00:00", "2024-05-17T15:00:00"]
 
-    import urllib.parse
     encoded_candidates = urllib.parse.urlencode([
         ("candidates", dt) for dt in candidates
     ])
-    encoded_body = urllib.parse.quote(body["email"]["subject"])
+    encoded_body = urllib.parse.quote(email["subject"])
 
     return {
         "candidates": candidates,
