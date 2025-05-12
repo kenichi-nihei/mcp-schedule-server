@@ -20,7 +20,8 @@ templates = Jinja2Templates(directory="templates")
 @app.post("/context")
 async def receive_context(request: Request):
     body = await request.json()
-
+    print("📨 リクエストボディ:", body)  # ← この行を追加
+    
     # 👇 context.email.subject に変更
     subject = body["context"]["email"]["subject"]
 
