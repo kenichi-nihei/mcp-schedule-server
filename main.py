@@ -1,5 +1,9 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+from typing import List
+import urllib.parse
 
 app = FastAPI()
 
@@ -11,6 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+templates = Jinja2Templates(directory="templates")
+
 @app.post("/context")
 async def receive_context(request: Request):
     body = await request.json()
@@ -21,14 +27,8 @@ async def receive_context(request: Request):
             "2024-05-15T15:00:00",
             "2024-05-17T15:00:00"
         ],
-        "ui_url": "https://example.com/choose"
+        "ui_url": "https://example.com/choose"  # ←後で差し替え
     }
-from fastapi import Form
-from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
-import urllib.parse
-
-templates = Jinja2Templates(directory="templates")
 
 @app.get("/choose", response_class=HTMLResponse)
 async def choose_get(request: Request, candidates: List[str] = [], body: str = ""):
