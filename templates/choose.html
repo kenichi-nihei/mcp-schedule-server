@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>打ち合わせ候補日時の選択</title>
+</head>
+<body>
+  <h1>以下の候補から日時を選択してください</h1>
+  <p>メール本文:</p>
+  <pre>{{ body }}</pre>
+
+  <form method="post">
+    {% for dt in candidates %}
+      <div>
+        <label>
+          <input type="radio" name="selected" value="{{ dt }}" required>
+          {{ dt }}
+        </label>
+      </div>
+    {% endfor %}
+    <button type="submit">この日時で予定を作成</button>
+  </form>
+</body>
+</html>
