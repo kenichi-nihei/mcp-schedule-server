@@ -20,7 +20,14 @@ templates = Jinja2Templates(directory="templates")
 @app.post("/context")
 async def receive_context(request: Request):
     body = await request.json()
-    print("📨 リクエストボディ:", body)  # ← この行を追加
+    print("✅ リクエストボディ:", body)
+
+# デバッグ用：メールの件名を確認
+try:
+    subject = body["context"]["email"]["subject"]
+    print("✅ 件名:", subject)
+except KeyError as e:
+    print("❌ キーが見つかりません:", e)
     
     # 👇 context.email.subject に変更
     subject = body["context"]["email"]["subject"]
