@@ -20,23 +20,33 @@ templates = Jinja2Templates(directory="templates")
 @app.post("/context")
 async def receive_context(request: Request):
     body = await request.json()
-    print("✅ 受け取ったリクエスト:", body)
+    candidates = ["2024-05-15T15:00:00", "2024-05-17T15:00:00"]
+
+    import urllib.parse
+    encoded_candidates = urllib.parse.urlencode([
+        ("candidates", dt) for dt in candidates
+    ])
+    encoded_body = urllib.parse.quote(body["email"]["subject"])
 
     return {
-        "candidates": [
-            "2024-05-15T15:00:00",
-            "2024-05-17T15:00:00"
-        ],
-        "ui_url": "https://example.com/choose"  # ←後で差し替え
+        "candidates": candidates,
+        "ui_url": f"https://mcp-schedule-server.onrender.com/choose?{encoded_candidates}&body={encoded_body}"
     }
 
+from fastapi import Query
+
 @app.get("/choose", response_class=HTMLResponse)
-async def choose_get(request: Request, candidates: List[str] = [], body: str = ""):
+async def choose_get(
+    request: Request,
+    candidates: List[str] = Query(default=[]),
+    body: str = ""
+):
     return templates.TemplateResponse("choose.html", {
         "request": request,
         "candidates": candidates,
         "body": body
     })
+
 
 @app.post("/choose", response_class=RedirectResponse)
 async def choose_post(selected: str = Form(...)):
