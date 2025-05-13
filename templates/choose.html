@@ -1,23 +1,24 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>打ち合わせ候補日時の選択</title>
+  <title>候補日時を選択</title>
 </head>
 <body>
   <h1>以下の候補から日時を選択してください</h1>
-  <p>メール本文:</p>
-  <pre>{{ body }}</pre>
+
+  <p><strong>メール本文:</strong><br>
+    {{ body }}
+  </p>
 
   <form method="post">
     {% for dt in candidates %}
       <div>
-        <label>
-          <input type="radio" name="selected" value="{{ dt }}" required>
-          {{ dt }}
-        </label>
+        <input type="radio" id="dt{{ loop.index }}" name="selected" value="{{ dt }}" {% if loop.first %}checked{% endif %}>
+        <label for="dt{{ loop.index }}">{{ dt }}</label>
       </div>
     {% endfor %}
+    <input type="hidden" name="body" value="{{ body }}">
     <button type="submit">この日時で予定を作成</button>
   </form>
 </body>
