@@ -11,7 +11,7 @@ from openai import OpenAI
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-# OpenAI API クライアントの初期化
+# OpenAI API クライアントの初期化（APIキーはRenderの環境変数から取得）
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # ✅ GPT で日時候補を抽出
