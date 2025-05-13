@@ -61,3 +61,20 @@ async def choose_get(
         "candidates": candidates,
         "body": body
     })
+
+from fastapi.responses import RedirectResponse
+
+@app.post("/choose")
+async def choose_post(request: Request):
+    form = await request.form()
+    selected = form.get("selected", "")
+    body = form.get("body", "")
+
+    # 予定作成画面のURLを生成（仮）
+    outlook_url = (
+        f"https://outlook.office.com/calendar/0/deeplink/compose?"
+        f"subject=打ち合わせ&body={urllib.parse.quote(body)}&startdt={selected}"
+    )
+
+    # ユーザーを予定作成画面にリダイレクト
+    return RedirectResponse(outlook_url, status_code=302)
