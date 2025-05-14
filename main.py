@@ -62,12 +62,20 @@ async def receive_context(request: Request):
 async def choose_get(
     request: Request,
     candidates: List[str] = Query(default=[]),
-    body: str = ""
+    conflicts: List[str] = Query(default=[]),  # ←追加
+    subject: str = "",
+    from_: str = Query(alias="from", default=""),
+    body: str = "",
+    cc: str = ""
 ):
     return templates.TemplateResponse("choose.html", {
         "request": request,
         "candidates": candidates,
-        "body": body
+        "conflicts": conflicts,  # ←追加
+        "subject": subject,
+        "from_": from_,
+        "body": body,
+        "cc": cc,
     })
 
 # ✅ /choose（POST）：選択後に予定作成画面へリダイレクト
