@@ -35,7 +35,9 @@
   <div class="section">
     <h2>候補一覧（⚠️ ＝予定あり）</h2>
     <form method="post">
-      {% for dt, conflict in candidates | zip(conflicts) %}
+      {% for dt in candidates %}
+        {% set idx = loop.index0 %}
+        {% set conflict = conflicts[idx] %}
         {% set date_only = dt.split('T')[0] %}
         <div>
           <input type="radio" name="selected" value="{{ dt }}" id="dt{{ loop.index }}" required>
