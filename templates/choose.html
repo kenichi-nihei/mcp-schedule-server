@@ -28,7 +28,7 @@
     <h2>📨 メール内容</h2>
     <p><strong>件名:</strong> {{ subject }}</p>
     <p><strong>差出人:</strong> {{ from }}</p>
-    <p><strong>CC:</strong> {{ cc | join(', ') }}</p>
+    <p><strong>CC:</strong> {{ cc.split(',') | join(', ') }}</p>
     <p><strong>本文:</strong><br>{{ body }}</p>
   </div>
 
