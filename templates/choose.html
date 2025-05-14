@@ -1,25 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>候補日時を選択</title>
+  <meta charset="utf-8">
+  <title>候補日時の選択</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2em;
+    }
+    .conflict {
+      color: red;
+      font-weight: bold;
+    }
+    .calendar-link {
+      margin-left: 1em;
+      font-size: 0.9em;
+    }
+    .section {
+      margin-bottom: 2em;
+    }
+  </style>
 </head>
 <body>
-  <h1>以下の候補から日時を選択してください</h1>
+  <h1>候補日時の選択</h1>
 
-  <p><strong>メール本文:</strong><br>
-    {{ body }}
-  </p>
+  <div class="section">
+    <h2>📨 メール内容</h2>
+    <p><strong>件名:</strong> {{ subject }}</p>
+    <p><strong>差出人:</strong> {{ from }}</p>
+    <p><strong>CC:</strong> {{ cc | join(', ') }}</p>
+    <p><strong>本文:</strong><br>{{ body }}</p>
+  </div>
 
-  <form method="post">
-    {% for dt in candidates %}
-      <div>
-        <input type="radio" id="dt{{ loop.index }}" name="selected" value="{{ dt }}" {% if loop.first %}checked{% endif %}>
-        <label for="dt{{ loop.index }}">{{ dt }}</label>
-      </div>
-    {% endfor %}
-    <input type="hidden" name="body" value="{{ body }}">
-    <button type="submit">この日時で予定を作成</button>
-  </form>
+  <div class="section">
+    <h2>候補一覧（⚠️ ＝予定あり）</h2>
+    <form method="post">
+      {% for dt, conflict in candidates | zip(conflicts) %}
+        {% set date_only = dt.split('T')[0] %}
+        <div>
+          <input type="radio" name="selected" value="{{ dt }}" id="dt{{ loop.index }}" required>
+          <label for="dt{{ loop.index }}">
+            {% if conflict == 'true' %}
+              ⚠️ <span class="conflict">{{ dt }}（予定あり）</span>
+            {% else %}
+              ○ {{ dt }}（空き）
+            {% endif %}
+          </label>
+          <a href="https://outlook.office.com/calendar/view/day?date={{ date_only }}" class="calendar-link" target="_blank">📅 カレンダーで確認</a>
+        </div>
+      {% endfor %}
+      <input type="hidden" name="body" value="{{ body }}">
+      <br>
+      <button type="submit">この日時で予定を作成</button>
+    </form>
+  </div>
 </body>
 </html>
