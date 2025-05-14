@@ -62,20 +62,23 @@ async def receive_context(request: Request):
 async def choose_get(
     request: Request,
     candidates: List[str] = Query(default=[]),
-    conflicts: List[str] = Query(default=[]),  # ←追加
+    conflicts: List[str] = Query(default=[]),
     subject: str = "",
     from_: str = Query(alias="from", default=""),
     body: str = "",
     cc: str = ""
 ):
+    # ← ここで見やすい形式に整形
+    cc_display = ", ".join(cc.split(",")) if cc else ""
+
     return templates.TemplateResponse("choose.html", {
         "request": request,
         "candidates": candidates,
-        "conflicts": conflicts,  # ←追加
+        "conflicts": conflicts,
         "subject": subject,
         "from_": from_,
         "body": body,
-        "cc": cc,
+        "cc": cc_display,  # ← 表示用に整形されたccを渡す
     })
 
 # ✅ /choose（POST）：選択後に予定作成画面へリダイレクト
