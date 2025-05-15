@@ -39,6 +39,11 @@
         {% set idx = loop.index0 %}
         {% set conflict = conflicts[idx] %}
         {% set date_only = dt.split('T')[0] %}
+
+        <!-- 確認用出力 -->
+        <p>dt: {{ dt }}</p>
+        <p>dt.split('T')[0]: {{ dt.split('T')[0] }}</p>
+      
         <div>
           <input type="radio" name="selected" value="{{ dt }}" id="dt{{ loop.index }}" required>
           <label for="dt{{ loop.index }}">
