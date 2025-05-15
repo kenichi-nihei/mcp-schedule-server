@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from typing import List
 import urllib.parse
 import os
@@ -11,9 +10,6 @@ from openai import OpenAI
 # FastAPI アプリとテンプレート設定
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-
-# 静的ファイル（HTML, JS, CSSなど）を /static で配信
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # OpenAI API クライアントの初期化（APIキーはRenderの環境変数から取得）
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
