@@ -1,22 +1,20 @@
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>Outlook カレンダーへ移動中...</title>
-  <script>
-    window.onload = function() {
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Outlook カレンダーにジャンプ</title>
+  </head>
+  <body>
+    <p>カレンダーを開いています...</p>
+    <script>
       const params = new URLSearchParams(window.location.search);
       const date = params.get("date");
       if (date) {
-        const targetUrl = `https://outlook.office.com/calendar/view/day?date=${date}`;
-        window.location.href = targetUrl;
+        const url = `https://outlook.office.com/calendar/view/day?date=${date}`;
+        window.location.href = url;
       } else {
         document.body.innerHTML = "<p>日付が指定されていません。</p>";
       }
-    };
-  </script>
-</head>
-<body>
-  <p>Outlook カレンダーへ移動中...</p>
-</body>
+    </script>
+  </body>
 </html>
