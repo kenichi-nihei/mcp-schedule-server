@@ -30,7 +30,7 @@
 
   <div class="section">
     <h2>候補一覧（⚠️ ＝予定あり）</h2>
-    <form method="post">
+    <form method="post" target="_blank">
       {% for dt in candidates %}
         {% set idx = loop.index0 %}
         {% set conflict = conflicts[idx] %}
