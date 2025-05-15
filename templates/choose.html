@@ -12,10 +12,6 @@
       color: red;
       font-weight: bold;
     }
-    .calendar-link {
-      margin-left: 1em;
-      font-size: 0.9em;
-    }
     .section {
       margin-bottom: 2em;
     }
@@ -38,10 +34,6 @@
       {% for dt in candidates %}
         {% set idx = loop.index0 %}
         {% set conflict = conflicts[idx] %}
-        {% set date_only = dt.split('T')[0] %}
-
-        <!-- 確認用出力 -->
-        <p>{{ dt }} → {{ dt.split('T')[0] }}</p>
 
         <div>
           <input type="radio" name="selected" value="{{ dt }}" id="dt{{ loop.index }}" required>
@@ -52,15 +44,11 @@
               ○ {{ dt }}（空き）
             {% endif %}
           </label>
-          <a href="https://mcp-schedule-server.onrender.com/static/jump.html?date={{ dt.split('T')[0] }}" target="_blank">📅 カレンダーで確認</a>
-          <!-- 従来のOutlook直リンク） -->
-          <!-- <a href="https://mcp-schedule-server.onrender.com/jump.html?date={{ dt.split('T')[0] }}" target="_blank">📅 カレンダーで確認</a> -->
-
         </div>
       {% endfor %}
       <input type="hidden" name="body" value="{{ body }}">
       <br>
-      <button type="submit">この日時で予定を作成</button>
+      <button type="submit">この日時で予定を作成してみる</button>
     </form>
   </div>
 </body>
