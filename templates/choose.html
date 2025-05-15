@@ -53,7 +53,9 @@
             {% endif %}
           </label>
           <a href="https://mcp-schedule-server.onrender.com/jump.html?date={{ dt.split('T')[0] }}" target="_blank">📅 カレンダーで確認</a>
-         {% <a href="https://outlook.office.com/calendar/view/day?date={{ dt.split('T')[0] }}" target="_blank">🗓️ カレンダーで確認</a> %}
+          <!-- 従来のOutlook直リンク） -->
+          <!-- <a href="https://outlook.office.com/calendar/view/day?date={{ dt.split('T')[0] }}" target="_blank">🗓️ カレンダーで確認</a> -->
+
         </div>
       {% endfor %}
       <input type="hidden" name="body" value="{{ body }}">
