@@ -45,6 +45,7 @@ async def receive_context(request: Request):
 
     # GPTで日時候補を抽出
     candidates = extract_datetime_candidates(email_body)
+    print("✅ GPT抽出候補日時:", candidates)
 
     # クエリパラメータ用にエンコード
     encoded_candidates = urllib.parse.urlencode([
