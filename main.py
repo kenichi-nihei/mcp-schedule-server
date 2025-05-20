@@ -51,13 +51,22 @@ async def receive_context(request: Request):
     encoded_candidates = urllib.parse.urlencode([
         ("candidates", dt) for dt in candidates
     ])
-    encoded_body = urllib.parse.quote(subject)
+    encoded_subject = urllib.parse.quote(subject)
+    encoded_body = urllib.parse.quote(email_body)
+    encoded_from = urllib.parse.quote(email["from"])
+    encoded_cc = urllib.parse.quote(",".join(email.get("cc", [])))  # ccが配列の場合
 
     return {
         "candidates": candidates,
-        "ui_url": f"https://mcp-schedule-server.onrender.com/choose?{encoded_candidates}&body={encoded_body}"
+        "ui_url": (
+            f"https://mcp-schedule-server.onrender.com/choose?"
+            f"{encoded_candidates}"
+            f"&subject={encoded_subject}"
+            f"&from={encoded_from}"
+            f"&cc={encoded_cc}"
+            f"&body={encoded_body}"
+        )
     }
-
 # ✅ /choose（GET）：候補日時を選ぶ画面
 @app.get("/choose", response_class=HTMLResponse)
 async def choose_get(
