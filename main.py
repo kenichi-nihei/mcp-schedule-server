@@ -6,15 +6,38 @@ from openai import OpenAI
 import urllib.parse
 import os
 import re
+from datetime import datetime, timedelta
 
-# FastAPI アプリとテンプレート設定
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-
-# OpenAI API クライアントの初期化（APIキーはRenderの環境変数から取得）
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# ✅ GPT で日時候補を抽出
+def strip_html_tags(text: str) -> str:
+    return re.sub(r'<[^>]+>', '', text).strip()
+
+def generate_subject_suggestion(current_subject: str, email_body: str) -> str:
+    prompt = f"""
+以下は受信したメールの件名と本文です。
+この内容から、会議予定のタイトルとして自然で要点が伝わるような件名を1文で生成してください。
+
+件名:
+{current_subject}
+
+本文:
+{email_body}
+
+# 出力形式：件名のみ（例：「○○に関する初回打ち合わせ」）
+"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print("❌ 件名生成エラー:", e)
+        return "打ち合わせ"
+
 def extract_datetime_candidates(email_body: str) -> List[str]:
     prompt = f"""
 以下のメール本文から、打ち合わせ候補日時を ISO8601形式（例: 2024-05-15T15:00:00）で最大3件抽出してください。
@@ -23,7 +46,7 @@ def extract_datetime_candidates(email_body: str) -> List[str]:
 """
     try:
         response = client.chat.completions.create(
-            model="gpt-4",  # 必要に応じて gpt-3.5-turbo に変更
+            model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
         content = response.choices[0].message.content
@@ -33,47 +56,43 @@ def extract_datetime_candidates(email_body: str) -> List[str]:
         print("❌ GPT呼び出しエラー:", e)
         return []
 
-# ✅ HTMLタグ除去関数（追加）
-def strip_html_tags(text: str) -> str:
-    """HTML形式のメール本文からタグを除去してプレーンテキストに変換"""
-    return re.sub(r'<[^>]+>', '', text).strip()
-
-# ✅ /contextエンドポイント：メール受信時に呼び出される
 @app.post("/context")
 async def receive_context(request: Request):
     body = await request.json()
     email = body["context"]["email"]
     subject = email["subject"]
-    email_body_raw = email["body"]　# ←元のHTML本文（そのままだと表示が崩れる）
-    email_body = strip_html_tags(email_body_raw)  # ← タグ除去を適用
+    email_body_raw = email["body"]
+    email_body = strip_html_tags(email_body_raw)
 
-    print("✅ 受信データ:", email)
+    if not subject or subject.strip() in ["", "打ち合わせ", "ご連絡"]:
+        subject = generate_subject_suggestion(subject, email_body)
 
-    # GPTで日時候補を抽出
-    candidates = extract_datetime_candidates(email_body)
-    print("✅ GPT抽出候補日時:", candidates)
-        
-    # クエリパラメータ用にエンコード
-    encoded_candidates = urllib.parse.urlencode([
-        ("candidates", dt) for dt in candidates
-    ])
+    from_ = email["from"]
+    cc = email.get("cc", "")
+    candidates_str = body["context"].get("candidates", "")
+    conflicts_str = body["context"].get("conflicts", "")
+    candidates = candidates_str.split("&") if candidates_str else []
+    conflicts = conflicts_str.split("&") if conflicts_str else []
+
+    encoded_candidates = urllib.parse.urlencode([("candidates", dt) for dt in candidates])
+    encoded_conflicts = urllib.parse.urlencode([("conflicts", c) for c in conflicts])
     encoded_subject = urllib.parse.quote(subject)
     encoded_body = urllib.parse.quote(email_body)
-    encoded_from = urllib.parse.quote(email["from"])
-    encoded_cc = urllib.parse.quote(",".join(email.get("cc", [])))  # ccが配列の場合
+    encoded_from = urllib.parse.quote(from_)
+    encoded_cc = urllib.parse.quote(cc)
 
     return {
         "candidates": candidates,
         "ui_url": (
             f"https://mcp-schedule-server.onrender.com/choose?"
-            f"{encoded_candidates}"
+            f"{encoded_candidates}&{encoded_conflicts}"
             f"&subject={encoded_subject}"
             f"&from={encoded_from}"
             f"&cc={encoded_cc}"
             f"&body={encoded_body}"
         )
     }
-# ✅ /choose（GET）：候補日時を選ぶ画面
+
 @app.get("/choose", response_class=HTMLResponse)
 async def choose_get(
     request: Request,
@@ -84,9 +103,7 @@ async def choose_get(
     body: str = "",
     cc: str = ""
 ):
-    # ← ここで見やすい形式に整形
     cc_display = ", ".join(cc.split(",")) if cc else ""
-
     return templates.TemplateResponse("choose.html", {
         "request": request,
         "candidates": candidates,
@@ -94,20 +111,23 @@ async def choose_get(
         "subject": subject,
         "from_": from_,
         "body": body,
-        "cc": cc_display,  # ← 表示用に整形されたccを渡す
+        "cc": cc_display,
     })
 
-# ✅ /choose（POST）：選択後に予定作成画面へリダイレクト
 @app.post("/choose")
 async def choose_post(request: Request):
     form = await request.form()
     selected = form.get("selected", "")
     body = form.get("body", "")
 
-    # Outlook予定作成画面のURL生成
+    start_dt = datetime.fromisoformat(selected)
+    end_dt = start_dt + timedelta(minutes=30)
+
     outlook_url = (
         f"https://outlook.office.com/calendar/0/deeplink/compose?"
-        f"subject=打ち合わせ&body={urllib.parse.quote(body)}&startdt={selected}"
+        f"subject=打ち合わせ"
+        f"&body={urllib.parse.quote(body)}"
+        f"&startdt={start_dt.isoformat()}"
+        f"&enddt={end_dt.isoformat()}"
     )
-
     return RedirectResponse(outlook_url, status_code=302)
