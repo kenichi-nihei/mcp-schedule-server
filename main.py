@@ -2,10 +2,10 @@ from fastapi import FastAPI, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from typing import List
+from openai import OpenAI
 import urllib.parse
 import os
-
-from openai import OpenAI
+import re
 
 # FastAPI アプリとテンプレート設定
 app = FastAPI()
@@ -33,20 +33,26 @@ def extract_datetime_candidates(email_body: str) -> List[str]:
         print("❌ GPT呼び出しエラー:", e)
         return []
 
+# ✅ HTMLタグ除去関数（追加）
+def strip_html_tags(text: str) -> str:
+    """HTML形式のメール本文からタグを除去してプレーンテキストに変換"""
+    return re.sub(r'<[^>]+>', '', text).strip()
+
 # ✅ /contextエンドポイント：メール受信時に呼び出される
 @app.post("/context")
 async def receive_context(request: Request):
     body = await request.json()
     email = body["context"]["email"]
     subject = email["subject"]
-    email_body = email["body"]
+    email_body_raw = email["body"]　# ←元のHTML本文（そのままだと表示が崩れる）
+    email_body = strip_html_tags(email_body_raw)  # ← タグ除去を適用
 
     print("✅ 受信データ:", email)
 
     # GPTで日時候補を抽出
     candidates = extract_datetime_candidates(email_body)
     print("✅ GPT抽出候補日時:", candidates)
-
+        
     # クエリパラメータ用にエンコード
     encoded_candidates = urllib.parse.urlencode([
         ("candidates", dt) for dt in candidates
