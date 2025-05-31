@@ -61,14 +61,14 @@ async def receive_context(request: Request):
     body = await request.json()
     email = body["context"]["email"]
     subject = email["subject"]
-    email_body_raw = email["body"]
+    email_body_raw = email["body"].replace('\uFEFF', '')
     email_body = strip_html_tags(email_body_raw)
 
-    if not subject or subject.strip() in ["", "打ち合わせ", "ご連絡"]:
+    if not subject or subject.strip() in ["", "打ち合わせ", "ご連絡", "相談", "確認"]:
         subject = generate_subject_suggestion(subject, email_body)
 
     from_ = email["from"]
-    cc = email.get("cc", "")
+    cc = email.get("cc", "").replace('\uFEFF', '').strip()
     candidates_str = body["context"].get("candidates", "")
     conflicts_str = body["context"].get("conflicts", "")
     candidates = candidates_str.split("&") if candidates_str else []
