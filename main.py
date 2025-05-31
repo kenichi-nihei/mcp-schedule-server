@@ -13,7 +13,9 @@ templates = Jinja2Templates(directory="templates")
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def strip_html_tags(text: str) -> str:
-    return re.sub(r'<[^>]+>', '', text).strip()
+    text = re.sub(r'<[^>]+>', '', text)  # HTMLタグ除去
+    text = text.replace('\uFEFF', '')    # BOM除去（&#65279;）
+    return text.strip()
 
 def generate_subject_suggestion(current_subject: str, email_body: str) -> str:
     prompt = f"""
@@ -140,8 +142,8 @@ async def choose_post(request: Request):
         f"&body={urllib.parse.quote(body)}"
         f"&startdt={start_dt.isoformat()}"
         f"&enddt={end_dt.isoformat()}"
-        f"&to={urllib.parse.quote(from_)}"
-        f"&cc={urllib.parse.quote(cc)}"
+        f"&to={urllib.parse.quote(to_param)}"
+        f"&cc={urllib.parse.quote(cc)}"    
     )
 
     return RedirectResponse(outlook_url, status_code=302)
