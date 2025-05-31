@@ -119,15 +119,21 @@ async def choose_post(request: Request):
     form = await request.form()
     selected = form.get("selected", "")
     body = form.get("body", "")
+    subject = form.get("subject", "打ち合わせ")
+    from_ = form.get("from", "")
+    cc = form.get("cc", "")
 
     start_dt = datetime.fromisoformat(selected)
     end_dt = start_dt + timedelta(minutes=30)
 
     outlook_url = (
         f"https://outlook.office.com/calendar/0/deeplink/compose?"
-        f"subject=打ち合わせ"
+        f"subject={urllib.parse.quote(subject)}"
         f"&body={urllib.parse.quote(body)}"
         f"&startdt={start_dt.isoformat()}"
         f"&enddt={end_dt.isoformat()}"
+        f"&to={urllib.parse.quote(from_)}"
+        f"&cc={urllib.parse.quote(cc)}"
     )
+
     return RedirectResponse(outlook_url, status_code=302)
