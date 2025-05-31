@@ -71,11 +71,8 @@ async def receive_context(request: Request):
 
     from_ = email["from"]
     cc = email.get("cc", "").replace('\uFEFF', '').strip()
-    candidates_str = body["context"].get("candidates", "")
-    conflicts_str = body["context"].get("conflicts", "")
-    candidates = candidates_str.split("&") if candidates_str else []
-    conflicts = conflicts_str.split("&") if conflicts_str else []
-
+    candidates = body["context"].get("candidates", [])
+    conflicts = body["context"].get("conflicts", [])
     encoded_candidates = urllib.parse.urlencode([("candidates", dt) for dt in candidates])
     encoded_conflicts = urllib.parse.urlencode([("conflicts", c) for c in conflicts])
     encoded_subject = urllib.parse.quote(subject)
