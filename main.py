@@ -126,6 +126,14 @@ async def choose_post(request: Request):
     start_dt = datetime.fromisoformat(selected)
     end_dt = start_dt + timedelta(minutes=30)
 
+    # ✅ 出席者の組み立て（from_ + cc）
+    attendees = []
+    if from_:
+        attendees.append(from_)
+    if cc:
+        attendees += [addr.strip() for addr in cc.split(",") if addr.strip()]
+    to_param = ",".join(attendees)
+
     outlook_url = (
         f"https://outlook.office.com/calendar/0/deeplink/compose?"
         f"subject={urllib.parse.quote(subject)}"
